@@ -1,0 +1,65 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:alpine3.16
+    container_name: postgres
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: postgres
+    volumes:
+      - type: volume
+        source: pgdata
+        target: /var/lib/postgresql/data
+        volume:
+          nocopy: true
+    networks:
+      dbback:
+        aliases:
+          - postgres
+    deploy:
+      placement:
+        max_replicas_per_node: 1
+        constraints:
+          - "node.role==manager"
+      restart_policy:
+        condition: on-failure
+    ports:
+      - "5432:5432"
+
+  dbutils:
+    image: dpage/pgadmin4:6.12
+    container_name: pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ds@whale.im
+      PGADMIN_DEFAULT_PASSWORD: datascience
+    volumes:
+      - type: volume
+        source: pgadmin
+        target: /var/lib/pgadmin
+        volume:
+          nocopy: true
+    ports:
+      - "5050:80"
+    networks:
+      dbback:
+        aliases:
+          - pgadmin
+    deploy:
+      placement:
+        max_replicas_per_node: 1
+        constraints:
+          - "node.role==manager"
+      restart_policy:
+        condition: on-failure
+
+networks:
+  dbback:
+    driver: bridge
+
+volumes:
+  pgdata:
+    external: false
+  pgadmin:
+    external: false
